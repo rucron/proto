@@ -1,0 +1,18 @@
+[package]
+name = "rucron-proto"
+version = "0.1.0"
+authors = ["Al <gLiu962@aucklanduni.ac.nz>"]
+edition = "2018"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "^0.7.0"
+http = "^0.2.4"
+tonic = "^0.4.1"
+serde = "^1.0.125"
+serde_derive = "^1.0.125"
+
+[build-dependencies]
+tonic-build = "^0.4.1"

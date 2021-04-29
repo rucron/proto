@@ -1,0 +1,90 @@
+syntax = "proto2";
+
+package daemonpb;
+
+enum AdvertiseClientStatus {
+  SERVING = 0;
+  NOT_SERVING = 1;
+}
+
+message AdvertiseClientHeartbeatResponse {
+  required AdvertiseClientStatus status = 1;
+}
+
+message AdvertiseClientHeartbeatRequest {
+  required string service = 1;
+}
+
+service DaemonService {
+  rpc Stop (StopRequest) returns (StopResponse);
+  rpc ViewConfig(ViewConfigRequest) returns (ViewConfigResponse);
+}
+
+service NetworkService {
+  rpc ViewConfig(ViewConfigRequest) returns (ViewConfigResponse);
+  rpc CheckAdvertiseClient(AdvertiseClientHeartbeatRequest) returns (AdvertiseClientHeartbeatResponse);
+}
+
+message AdvertiseClientSettings {
+  repeated string urls = 1;
+  required uint32 heartbeat_max_retry = 2;
+  required string heartbeat_interval = 3;
+  required string policy = 4;
+}
+
+message ClusterSettings {
+  required AdvertiseClientSettings advertise_client = 1;
+  repeated string initial_advertise_peer_urls = 2;
+  required string initial_cluster = 3;
+  required string initial_cluster_state = 4;
+}
+
+message SecuritySettings {
+  repeated string cors = 1;
+  required string key_file = 2;
+  required string cert_file = 3;
+  required string peer_key_file = 4;
+  required string peer_cert_file = 5;
+}
+
+message LogSettings {
+  required string dir = 1;
+  required string level = 2;
+  required string filter = 3;
+}
+
+message Config {
+  required ClusterSettings cluster = 1;
+  required SecuritySettings security = 2;
+  required LogSettings log = 3;
+  required string config_file = 4;
+}
+
+message ViewConfigRequest {
+
+}
+
+message ViewConfigResponse {
+  required int32 err = 1;
+  required string msg = 2;
+  required Config config = 3;
+}
+
+message GetGroupRequest {
+
+}
+
+message GetGroupResponse {
+
+}
+
+message StopRequest {
+  required bool force = 1;
+}
+
+message StopResponse {
+  required int32 err = 1;
+  optional string addr = 2;
+  required int32 daemon_pid = 3;
+  required string msg = 4;
+}

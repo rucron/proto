@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package raftpb;
+
+service Raft {
+  rpc poll(PollRequest) returns (PollResponse);
+}
+
+message PollRequest {
+
+}
+
+message PollResponse {
+
+}
