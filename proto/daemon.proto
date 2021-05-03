@@ -12,17 +12,18 @@ message AdvertiseClientHeartbeatResponse {
 }
 
 message AdvertiseClientHeartbeatRequest {
-  required string service = 1;
+  required string addr = 1;
+  required string id = 2;
 }
 
 service DaemonService {
+  rpc AdvertiseClientHeartbeat(AdvertiseClientHeartbeatRequest) returns (AdvertiseClientHeartbeatResponse);
   rpc Stop (StopRequest) returns (StopResponse);
   rpc ViewConfig(ViewConfigRequest) returns (ViewConfigResponse);
 }
 
 service NetworkService {
   rpc ViewConfig(ViewConfigRequest) returns (ViewConfigResponse);
-  rpc CheckAdvertiseClient(AdvertiseClientHeartbeatRequest) returns (AdvertiseClientHeartbeatResponse);
 }
 
 message AdvertiseClientSettings {

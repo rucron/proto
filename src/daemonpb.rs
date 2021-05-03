@@ -10,7 +10,9 @@ pub struct AdvertiseClientHeartbeatResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdvertiseClientHeartbeatRequest {
     #[prost(string, required, tag = "1")]
-    pub service: ::prost::alloc::string::String,
+    pub addr: ::prost::alloc::string::String,
+    #[prost(string, required, tag = "2")]
+    pub id: ::prost::alloc::string::String,
 }
 #[derive(serde_derive::Deserialize, serde_derive::Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -161,6 +163,23 @@ pub mod daemon_service_client {
             let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
             Self { inner }
         }
+        pub async fn advertise_client_heartbeat(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AdvertiseClientHeartbeatRequest>,
+        ) -> Result<tonic::Response<super::AdvertiseClientHeartbeatResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/daemonpb.DaemonService/AdvertiseClientHeartbeat",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         pub async fn stop(
             &mut self,
             request: impl tonic::IntoRequest<super::StopRequest>,
@@ -250,23 +269,6 @@ pub mod network_service_client {
             let path = http::uri::PathAndQuery::from_static("/daemonpb.NetworkService/ViewConfig");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        pub async fn check_advertise_client(
-            &mut self,
-            request: impl tonic::IntoRequest<super::AdvertiseClientHeartbeatRequest>,
-        ) -> Result<tonic::Response<super::AdvertiseClientHeartbeatResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/daemonpb.NetworkService/CheckAdvertiseClient",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
     }
     impl<T: Clone> Clone for NetworkServiceClient<T> {
         fn clone(&self) -> Self {
@@ -288,6 +290,10 @@ pub mod daemon_service_server {
     #[doc = "Generated trait containing gRPC methods that should be implemented for use with DaemonServiceServer."]
     #[async_trait]
     pub trait DaemonService: Send + Sync + 'static {
+        async fn advertise_client_heartbeat(
+            &self,
+            request: tonic::Request<super::AdvertiseClientHeartbeatRequest>,
+        ) -> Result<tonic::Response<super::AdvertiseClientHeartbeatResponse>, tonic::Status>;
         async fn stop(
             &self,
             request: tonic::Request<super::StopRequest>,
@@ -329,6 +335,41 @@ pub mod daemon_service_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
+                "/daemonpb.DaemonService/AdvertiseClientHeartbeat" => {
+                    #[allow(non_camel_case_types)]
+                    struct AdvertiseClientHeartbeatSvc<T: DaemonService>(pub Arc<T>);
+                    impl<T: DaemonService>
+                        tonic::server::UnaryService<super::AdvertiseClientHeartbeatRequest>
+                        for AdvertiseClientHeartbeatSvc<T>
+                    {
+                        type Response = super::AdvertiseClientHeartbeatResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::AdvertiseClientHeartbeatRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut =
+                                async move { (*inner).advertise_client_heartbeat(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = AdvertiseClientHeartbeatSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/daemonpb.DaemonService/Stop" => {
                     #[allow(non_camel_case_types)]
                     struct StopSvc<T: DaemonService>(pub Arc<T>);
@@ -433,10 +474,6 @@ pub mod network_service_server {
             &self,
             request: tonic::Request<super::ViewConfigRequest>,
         ) -> Result<tonic::Response<super::ViewConfigResponse>, tonic::Status>;
-        async fn check_advertise_client(
-            &self,
-            request: tonic::Request<super::AdvertiseClientHeartbeatRequest>,
-        ) -> Result<tonic::Response<super::AdvertiseClientHeartbeatResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct NetworkServiceServer<T: NetworkService> {
@@ -490,40 +527,6 @@ pub mod network_service_server {
                         let interceptor = inner.1.clone();
                         let inner = inner.0;
                         let method = ViewConfigSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = if let Some(interceptor) = interceptor {
-                            tonic::server::Grpc::with_interceptor(codec, interceptor)
-                        } else {
-                            tonic::server::Grpc::new(codec)
-                        };
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/daemonpb.NetworkService/CheckAdvertiseClient" => {
-                    #[allow(non_camel_case_types)]
-                    struct CheckAdvertiseClientSvc<T: NetworkService>(pub Arc<T>);
-                    impl<T: NetworkService>
-                        tonic::server::UnaryService<super::AdvertiseClientHeartbeatRequest>
-                        for CheckAdvertiseClientSvc<T>
-                    {
-                        type Response = super::AdvertiseClientHeartbeatResponse;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::AdvertiseClientHeartbeatRequest>,
-                        ) -> Self::Future {
-                            let inner = self.0.clone();
-                            let fut = async move { (*inner).check_advertise_client(request).await };
-                            Box::pin(fut)
-                        }
-                    }
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let interceptor = inner.1.clone();
-                        let inner = inner.0;
-                        let method = CheckAdvertiseClientSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = if let Some(interceptor) = interceptor {
                             tonic::server::Grpc::with_interceptor(codec, interceptor)
