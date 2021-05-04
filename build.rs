@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .type_attribute(".", "#[serde(rename_all = \"kebab-case\")]")
         .out_dir("src/")
-        .compile(&["proto/daemon.proto"], &["proto"])
+        .compile(&["proto/daemon.proto", "proto/typ.proto", "network.proto"], &["proto"])
         .unwrap();
 
     tonic_build::configure()
