@@ -1,3 +1,3 @@
-pub mod daemonpb;
 pub mod heartbeatpb;
 pub mod raftpb;
+pub mod pb;
